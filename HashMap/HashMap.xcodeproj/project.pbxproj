@@ -8,7 +8,6 @@
 
 /* Begin PBXBuildFile section */
 		3F94BF801F8057B60022AFDF /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3F94BF7F1F8057B60022AFDF /* main.cpp */; };
-		3F94BF8A1F8059290022AFDF /* HashMap.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3F94BF881F8059290022AFDF /* HashMap.cpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -26,7 +25,6 @@
 /* Begin PBXFileReference section */
 		3F94BF7C1F8057B60022AFDF /* HashMap */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = HashMap; sourceTree = BUILT_PRODUCTS_DIR; };
 		3F94BF7F1F8057B60022AFDF /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
-		3F94BF881F8059290022AFDF /* HashMap.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = HashMap.cpp; sourceTree = "<group>"; };
 		3F94BF891F8059290022AFDF /* HashMap.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HashMap.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -62,7 +60,6 @@
 			children = (
 				3F94BF7F1F8057B60022AFDF /* main.cpp */,
 				3F94BF891F8059290022AFDF /* HashMap.h */,
-				3F94BF881F8059290022AFDF /* HashMap.cpp */,
 			);
 			path = HashMap;
 			sourceTree = "<group>";
@@ -125,7 +122,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				3F94BF8A1F8059290022AFDF /* HashMap.cpp in Sources */,
 				3F94BF801F8057B60022AFDF /* main.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
