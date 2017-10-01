@@ -28,14 +28,6 @@
  one representation will be in the list form for a linear search, in order of created
  the second representation will be more like a table reliant on hashkeys & indexable
  
- 
- Implement following functions:
- 
- - get(key): return the value associated with the given key, or null if no value is set.
- 
- - delete(key): delete the value associated with the given key, 
- returning the value on success or null if the key has no value.
- 
  */
 
 
@@ -50,8 +42,20 @@
 template<typename TYPE>
 struct Node {
     Node *next = nullptr;
+    Node *down = nullptr;
     std::string key = "";
     TYPE *value = nullptr;
+    
+    ~Node(){
+        delete next;
+        next = nullptr;
+        delete down;
+        down = nullptr;
+        delete value;
+        value = nullptr;
+        key = "";
+    }
+    
 };
 
 
@@ -62,6 +66,8 @@ private:
 
     Node<TYPE> *hashList;
     Node<TYPE> **hashTable;
+    Node<TYPE> *nextFreeNode;
+    Node<TYPE> *lastNode;
     
     int hashmapCapacity;
     int currentSize;
@@ -95,10 +101,20 @@ public:
         // create array of pointers to nodes based on max cap.
         hashTable = new Node<TYPE>*[hashmapCapacity];
         
-        currentSize = 0;                 //structure starts empty
+        currentSize = 0;        //structure starts empty
+        nextFreeNode = &hashList[0];
+        lastNode = &hashList[capacity_in-1];
         
         // all nodes should be empty at this point
+        // need to create linked list
+        for (int i = 0; i < capacity_in-1;){
+            hashList[i]->next=hashList[++i];
+        }
         
+        // need to set hashTable to be empty
+        for (auto tableElt : hashTable){
+            tableElt = nullptr;
+        }
     }
     
     ~HashMap();
@@ -109,20 +125,20 @@ public:
      * @parameter: key_in, val_in for setting
      * @returns: boolean value indicating success / failure
      */
-    bool set(std::string key_in, TYPE val_in){
-        
+    bool set(const std::string key_in, TYPE val_in){
         // three cases:
         // already here, not here w/ capacity, not here w/ no capacity
         
         int loc = hashing(key_in);
         Node<TYPE>* currentNode = hashTable[loc];
+        Node<TYPE>* prevNode = nullptr;
         
         // if here (use get function to see if here)
         if (get(key_in) != NULL){
             
             //check loc given by hashing
             while(currentNode->key != key_in){
-                currentNode = currentNode->next;
+                currentNode = currentNode->down;
             }
             
             currentNode->value = val_in;
@@ -132,19 +148,45 @@ public:
         // at this point - 2 cases left
         if (currentSize == hashmapCapacity)     return false;
         
-        while (currentNode == nullptr){
-            currentNode = currentNode->next;
+        
+        while (currentNode != nullptr){
+            prevNode = currentNode;
+            currentNode = currentNode->down;
         }
         
-        currentNode->next = &hashList[currentSize++];
+        if (prevNode != nullptr)    prevNode->down = nextFreeNode;
+        
         currentNode->key = key_in;
         currentNode->value = val_in;
         
-        return true;
+        currentSize++;
+        nextFreeNode = nextFreeNode->next;
         
+        return true;
     }
     
-    TYPE get(std::string key_in);
+    /*
+     * get
+     * @parameter: takes in key
+     * @returns: the value associated with the given key, or null if no value is set.
+     */
+    TYPE get(const std::string key_in) const{
+        // two cases: there or not there
+        
+        if (currentSize == 0)   return NULL;
+        
+        int loc = hashing(key_in);
+        Node<TYPE>* currentNode = hashTable[loc];
+        
+        if (currentNode == nullptr) return NULL;
+        
+        while(currentNode->key != key_in){
+            if (currentNode->down != nullptr)   currentNode = currentNode->down;
+            else                                return NULL;
+        }
+        
+        return currentNode->value;
+    }
     
     
     /*
@@ -155,7 +197,65 @@ public:
      * @parameter: key_in, string key to search for object
      * @returns: T, value on success or nothing if empty
      */
-    TYPE deletes(std::string key_in);
+    TYPE deletes(const std::string key_in){
+        
+        if (currentSize == 0)       return NULL;
+        if (get(key_in) == NULL)    return NULL;
+        
+        int loc = hashing(key_in);
+        Node<TYPE>* currentNode = hashTable[loc];
+        Node<TYPE>* prevNode = nullptr;
+        
+        // three cases:
+        // 1) only one in hashTable col
+        // 2) middle of hashTable col
+        // 3) end of hashTable col
+        
+        //to find prevNode
+        while(currentNode->key != key_in){
+            prevNode = currentNode;
+            currentNode = currentNode->down;
+        }
+        
+        // case 1
+        if (prevNode == nullptr){
+            hashTable[loc] = nullptr;
+            TYPE temp = currentNode->value;
+            currentNode->next = nullptr;
+            delete currentNode;
+            lastNode->next = currentNode;
+            lastNode = currentNode;
+            
+            return temp;
+        }
+        
+        // case 2
+        if (currentNode->down != nullptr){
+            
+            prevNode->down = currentNode->down;
+            TYPE temp = currentNode->value;
+            currentNode->next = nullptr;
+            currentNode->down = nullptr;
+            delete currentNode;
+            lastNode->next = currentNode;
+            lastNode = currentNode;
+            
+            return temp;
+            
+        }else{
+            
+            prevNode->down = nullptr;
+            TYPE temp = currentNode->value;
+            currentNode->next = nullptr;
+            delete currentNode;
+            lastNode->next = currentNode;
+            lastNode = currentNode;
+            
+            return temp;
+            
+        }
+        
+    }
     
     /*
      * @return: float value representing the load factor
