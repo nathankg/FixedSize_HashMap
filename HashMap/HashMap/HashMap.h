@@ -18,25 +18,23 @@
 
 /*
  
- Plan:
+ PLAN:
+ 
+ Key thoughts:
+ - fixed-size: max num of elts that can be added is fixed by constructor
+ - no resizing
+ 
+ we'll use one hashtable with two representations
+ one representation will be in the list form for a linear search, in order of created
+ the second representation will be more like a table reliant on hashkeys & indexable
  
  
- Implement four functions:
- 
- - constructor(size): return an instance of the class with pre-allocated space for
- the given number of objects.
- 
- - boolean set(key, value): stores the given key/value pair in the hash map. 
- Returns a boolean value indicating success / failure of the operation.
+ Implement following functions:
  
  - get(key): return the value associated with the given key, or null if no value is set.
  
  - delete(key): delete the value associated with the given key, 
  returning the value on success or null if the key has no value.
- 
- - float load(): return a float value representing the load factor 
- (`(items in hash map)/(size of hash map)`) of the data structure. 
- Since the size of the data structure is fixed, this should never be greater than 1.
  
  */
 
@@ -47,24 +45,125 @@
 #include <stdio.h>
 #include <string>
 
+// Node
+// represents the inividual "storage space" for each string key to data object reference
+template<typename TYPE>
+struct Node {
+    Node *next = nullptr;
+    std::string key = "";
+    TYPE *value = nullptr;
+};
+
+
+template<typename TYPE>
 class HashMap {
     
-    int hashmapSize;
+private:
+
+    Node<TYPE> *hashList;
+    Node<TYPE> **hashTable;
     
+    int hashmapCapacity;
+    int currentSize;
+    
+    // hashing
+    // @parameter: key_in, takes in key string
+    // @returns: returns location
+    int hashing(std::string key_in){
+        std::hash<std::string> strHash;
+        return (strHash(key_in)%hashmapCapacity);
+    }
     
 public:
     
-    HashMap(): hashmapSize(0){};
+    // default constructor - not needed
+    // HashMap(): hashmapCapacity(0){};
     
-    HashMap(): {}
+    /*
+     * custom constructor
+     * @parameter: size_in, size of space for pre-allocation
+     */
+    HashMap(int capacity_in): hashmapCapacity(capacity_in) {
+        if (hashmapCapacity <= 0){
+            std::cerr << "Error: Invalid HashMap Capacity" << std::endl;
+            exit(1);
+        }
+        
+        // create array of Nodes based on max cap.
+        hashList = new Node<TYPE>[hashmapCapacity];
+        
+        // create array of pointers to nodes based on max cap.
+        hashTable = new Node<TYPE>*[hashmapCapacity];
+        
+        currentSize = 0;                 //structure starts empty
+        
+        // all nodes should be empty at this point
+        
+    }
     
-    bool set(std::string key_in, int val_in);
+    ~HashMap();
     
-    int get(std::string key_in);
+    /*
+     * set
+     * stores the given key/value pair in the hash map.
+     * @parameter: key_in, val_in for setting
+     * @returns: boolean value indicating success / failure
+     */
+    bool set(std::string key_in, TYPE val_in){
+        
+        // three cases:
+        // already here, not here w/ capacity, not here w/ no capacity
+        
+        int loc = hashing(key_in);
+        Node<TYPE>* currentNode = hashTable[loc];
+        
+        // if here (use get function to see if here)
+        if (get(key_in) != NULL){
+            
+            //check loc given by hashing
+            while(currentNode->key != key_in){
+                currentNode = currentNode->next;
+            }
+            
+            currentNode->value = val_in;
+            return true;
+        }
+        
+        // at this point - 2 cases left
+        if (currentSize == hashmapCapacity)     return false;
+        
+        while (currentNode == nullptr){
+            currentNode = currentNode->next;
+        }
+        
+        currentNode->next = &hashList[currentSize++];
+        currentNode->key = key_in;
+        currentNode->value = val_in;
+        
+        return true;
+        
+    }
     
-    int delete(std::string key_in);
+    TYPE get(std::string key_in);
     
-    float load();
+    
+    /*
+     * deletes
+     * NOTE: NEED TO USE DIFFERENT FUNCTION NAME HERE
+     * (delete is a C++ keyword)
+     * deletes value associated with string key
+     * @parameter: key_in, string key to search for object
+     * @returns: T, value on success or nothing if empty
+     */
+    TYPE deletes(std::string key_in);
+    
+    /*
+     * @return: float value representing the load factor
+     * (`(items in hash map)/(size of hash map)`)
+     */
+    float load(){
+        return ((float)currentSize / hashmapCapacity);
+    }
     
 };
 
