@@ -46,15 +46,7 @@ struct Node {
     std::string key = "";
     TYPE *value = nullptr;
     
-    ~Node(){
-        delete next;
-        next = nullptr;
-        delete down;
-        down = nullptr;
-        delete value;
-        value = nullptr;
-        key = "";
-    }
+    ~Node(){}
     
 };
 
@@ -75,9 +67,10 @@ private:
     // hashing
     // @parameter: key_in, takes in key string
     // @returns: returns location
-    int hashing(std::string key_in){
+    int hashing(const std::string &key_in) const{
         std::hash<std::string> strHash;
-        return (strHash(key_in)%hashmapCapacity);
+        std::string temp = key_in;
+        return (strHash(temp)%hashmapCapacity);
     }
     
 public:
@@ -108,16 +101,39 @@ public:
         // all nodes should be empty at this point
         // need to create linked list
         for (int i = 0; i < capacity_in-1;){
-            hashList[i]->next=hashList[++i];
+            hashList[i].next = &(hashList[++i]);
         }
         
+        hashList[hashmapCapacity].next = nullptr;
+        
         // need to set hashTable to be empty
-        for (auto tableElt : hashTable){
-            tableElt = nullptr;
+        for (int i = 0; i < capacity_in; ++i){
+            hashTable[i] = nullptr;
         }
     }
     
-    ~HashMap();
+    /*
+     * get
+     * @parameter: takes in key
+     * @returns: the value associated with the given key, or null if no value is set.
+     */
+    TYPE get(const std::string key_in) const{
+        // two cases: there or not there
+        
+        if (currentSize == 0)   return NULL;
+        
+        int loc = hashing(key_in);
+        Node<TYPE>* currentNode = hashTable[loc];
+        
+        if (currentNode == nullptr) return NULL;
+        
+        while(currentNode->key != key_in){
+            if (currentNode->down != nullptr)   currentNode = currentNode->down;
+            else                                return NULL;
+        }
+        
+        return *(currentNode->value);
+    }
     
     /*
      * set
@@ -141,7 +157,7 @@ public:
                 currentNode = currentNode->down;
             }
             
-            currentNode->value = val_in;
+            currentNode->value = &val_in;
             return true;
         }
         
@@ -149,43 +165,24 @@ public:
         if (currentSize == hashmapCapacity)     return false;
         
         
-        while (currentNode != nullptr){
-            prevNode = currentNode;
-            currentNode = currentNode->down;
+        if (currentNode == nullptr){
+            hashTable[loc] = nextFreeNode;
+        }else{
+            while (currentNode != nullptr){
+                prevNode = currentNode;
+                currentNode = currentNode->down;
+            }
+            prevNode->down = nextFreeNode;
         }
         
-        if (prevNode != nullptr)    prevNode->down = nextFreeNode;
-        
+        currentNode = nextFreeNode;
         currentNode->key = key_in;
-        currentNode->value = val_in;
+        currentNode->value = &val_in;
         
         currentSize++;
         nextFreeNode = nextFreeNode->next;
         
         return true;
-    }
-    
-    /*
-     * get
-     * @parameter: takes in key
-     * @returns: the value associated with the given key, or null if no value is set.
-     */
-    TYPE get(const std::string key_in) const{
-        // two cases: there or not there
-        
-        if (currentSize == 0)   return NULL;
-        
-        int loc = hashing(key_in);
-        Node<TYPE>* currentNode = hashTable[loc];
-        
-        if (currentNode == nullptr) return NULL;
-        
-        while(currentNode->key != key_in){
-            if (currentNode->down != nullptr)   currentNode = currentNode->down;
-            else                                return NULL;
-        }
-        
-        return currentNode->value;
     }
     
     
@@ -220,7 +217,7 @@ public:
         // case 1
         if (prevNode == nullptr){
             hashTable[loc] = nullptr;
-            TYPE temp = currentNode->value;
+            TYPE temp = *(currentNode->value);
             currentNode->next = nullptr;
             delete currentNode;
             lastNode->next = currentNode;
@@ -233,7 +230,7 @@ public:
         if (currentNode->down != nullptr){
             
             prevNode->down = currentNode->down;
-            TYPE temp = currentNode->value;
+            TYPE temp = *(currentNode->value);
             currentNode->next = nullptr;
             currentNode->down = nullptr;
             delete currentNode;
@@ -245,7 +242,7 @@ public:
         }else{
             
             prevNode->down = nullptr;
-            TYPE temp = currentNode->value;
+            TYPE temp = *(currentNode->value);
             currentNode->next = nullptr;
             delete currentNode;
             lastNode->next = currentNode;
@@ -263,6 +260,12 @@ public:
      */
     float load(){
         return ((float)currentSize / hashmapCapacity);
+    }
+    
+    
+    ~HashMap(){
+        delete[] hashList;
+        delete[] hashTable;
     }
     
 };
